@@ -3,33 +3,33 @@ build-lists: true
 slidenumbers: true
 footer: @raulraja @47deg
 
-# [fit] Better Types => Fewer Tests
+# Better Types => Fewer Tests
 
 ![filtered](romanesco.jpg)
 
 ---
 
-# [fit] More tests = Better Software?
+# More tests = Better Software?
 
 ![filtered](romanesco.jpg)
 
 ---
 
-# [fit] Are tests a factor in correctness?
+# Are tests a factor in correctness?
 
 ![filtered](romanesco.jpg)
 
 ---
 
-# [fit] What are we testing?
+# What are we testing?
 
 ---
 
-# [fit] What are we testing?
+# _Testing_ : Programs
 
 Programs
 
-```tut
+```tut:silent
 class Counter(var amount: Int) {
   require(amount >= 0, s"($amount seed value) must be a positive integer") 
   def increase(): Unit =
@@ -39,11 +39,9 @@ class Counter(var amount: Int) {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Input values
 
-Input values are in range of acceptance
-
-```tut
+```tut:book
 class CounterSpec extends BaseTest {
   test("Can't be constructed with negative numbers") {
     the [IllegalArgumentException] thrownBy {
@@ -56,11 +54,9 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Side effects
 
-Side effects caused by programs.
-
-```tut
+```tut:book
 class CounterSpec extends BaseTest {
   test("`Counter#amount` is mutated after `Counter#increase` is invoked") {
     val counter = new Counter(0)
@@ -73,11 +69,9 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Output values
 
-Programs produce an expected output value given an accepted input value.
-
-```tut
+```tut:book
 class CounterSpec extends BaseTest {
   test("`Counter#amount` is properly initialized") {
     new Counter(0).amount shouldBe 0
@@ -88,11 +82,9 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Runtime
 
-Changes in requirements.
-
-```tut
+```tut:silent
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.concurrent.atomic.AtomicInteger
@@ -109,11 +101,11 @@ class FutureCounter(val amount: AtomicInteger) {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Runtime
 
 Changes in requirements
 
-```tut
+```tut:book
 class FutureCounterSpec extends BaseTest {
   test("`FutureCounter#amount` is mutated after `FutureCounterv#increase` is invoked") {
     val counter = new FutureCounter(new AtomicInteger(0))
@@ -126,11 +118,11 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Runtime
 
 Changes in requirements
 
-```tut
+```tut:book
 import scala.concurrent.duration._
 
 class FutureCounterSpec extends BaseTest {
@@ -145,16 +137,16 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing?
 
 - Input values are in range of acceptance
 - Side effects caused by programs
 - Programs produce an expected output value given an accepted input value.
-- Changes in requirements
+- Runtime machinery
 
 ---
 
-# [fit] The Dark Path
+# The Dark Path
 
 > Now, ask yourself why these defects happen too often. 
 > If your answer is that our languages don’t prevent them, 
@@ -170,7 +162,7 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# [fit] The Dark Path
+# The Dark Path
 
 > And what is it that programmers are supposed to do to prevent defects? 
 > I’ll give you one guess. Here are some hints. 
@@ -181,9 +173,9 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# [fit] The Dark Path
+# The Dark Path
 
-I disagree
+I disagree & so does the compiler
 
 > And what is it that programmers are supposed to do to prevent defects? 
 > I’ll give you one guess. Here are some hints. 
@@ -192,9 +184,20 @@ I disagree
 
 ---
 
-# [fit] The Dark Path
+# The Dark Path
 
-And so does the compiler
+> And what is it that programmers are supposed to do to prevent defects? 
+> I’ll give you one guess. Here are some hints. 
+> It’s a verb. It starts with a “T”. Yeah. 
+> You got it. ~~TEST!~~, 
+
+__TYPES!__
+
+-- Compiler. 
+
+---
+
+# The Dark Path
 
 > And what is it that programmers are supposed to do to prevent defects? 
 > I’ll give you one guess. Here are some hints. 
@@ -203,11 +206,11 @@ And so does the compiler
 
 __TYPES & FP!__
 
--- Mr Compiler. 
+-- Compiler. 
 
 ---
 
-## What is Functional Programming ##
+# What is Functional Programming
 
 > In computer science, functional programming
 > is a programming paradigm.
@@ -221,7 +224,7 @@ __TYPES & FP!__
 
 ---
 
-## Common traits of Functional Programming ##
+# Common traits of Functional Programming 
 
 - Higher-order functions
 - Immutable data
@@ -232,7 +235,7 @@ __TYPES & FP!__
 
 ---
 
-# [fit] What are we testing?
+# What are we testing?
 
 Back to our original concerns
 
@@ -243,24 +246,11 @@ Back to our original concerns
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Input values
 
-Back to our original concerns
+`counter: Int` is a poorly chosen type. Let's fix that!
 
-- __Input values are in range of acceptance__
-- Programs produce an expected output value given an accepted input value.
-- Side effects caused by programs
-- Changes in requirements
-
----
-
-# [fit] What are we testing?
-
-Input values are in range of acceptance.
-
-The issue here is that `Int` is a poorly chosen type. Let's fix that!
-
-```tut
+```tut:book
 class CounterSpec extends BaseTest {
   test("Can't be constructed with negative numbers") {
     the [IllegalArgumentException] thrownBy {
@@ -273,11 +263,11 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Input values
 
-Input values are in range of acceptance.
+Stronger refinement for `Int` constrains our values at compile and runtime
 
-```tut
+```tut:silent
 import eu.timepit.refined.W
 import eu.timepit.refined.cats.syntax._
 import eu.timepit.refined.api.{Refined, RefinedTypeOps}
@@ -294,9 +284,7 @@ class Counter(var amount: Amount) {
 
 ---
 
-# [fit] What are we testing?
-
-Input values are in range of acceptance.
+# What are we testing? => Input values
 
 The compiler can verify the range and we can properly type `amount`
 
@@ -318,13 +306,11 @@ The compiler can verify the range and we can properly type `amount`
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Input values
 
-Input values are in range of acceptance.
+We can still test this but this test proves nothing
 
-The compiler can verify the range and we can properly type `amount`
-
-```tut
+```tut:book
 class CounterSpec extends BaseTest {
   // Testing an invariant xD
   test("Can't compile with literal negative number") {
@@ -336,9 +322,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
-
-Input values are in range of acceptance.
+# What are we testing? => Input values
 
 The compiler can verify the range and we can properly type `amount`
 
@@ -354,7 +338,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing?
 
 Back to our original concerns
 
@@ -365,11 +349,9 @@ Back to our original concerns
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Side effects
 
-Side effects caused by programs.
-
-```tut
+```tut:book
 class CounterSpec extends BaseTest {
   test("`Counter#amount` is mutated after `Counter#increase` is invoked") {
     val counter = new Counter(Amount(0))
@@ -382,11 +364,9 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Side effects
 
-Side effects caused by programs.
-
-```tut
+```tut:silent
 class Counter(var amount: Amount) { // mutable
   def increase(): Unit = // Unit does not return anything useful
     Amount.from(amount.value + 1).foreach(v => amount = v) // mutates the external scope
@@ -395,11 +375,11 @@ class Counter(var amount: Amount) { // mutable
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Side effects
 
-No need to test side Effects if functions are __PURE!__
+No need to test side effects if functions are __PURE!__
 
-```tut
+```tut:silent
 class Counter(val amount: Amount) { // values are immutable
   def increase(): Counter = // Every operation returns an immutable copy
     Amount.validate(amount.value + 1).fold( // Amount.validate does not need to be tested
@@ -411,7 +391,7 @@ class Counter(val amount: Amount) { // values are immutable
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Side effects
 
 Side effects caused by programs.
 
@@ -430,7 +410,7 @@ Side effects caused by programs.
 
 ---
 
-# [fit] What are we testing?
+# What are we testing?
 
 Back to our original concerns
 
@@ -441,13 +421,13 @@ Back to our original concerns
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Output values
 
-Programs produce an expected output value given an accepted input value.
+## [fit] Programs produce an expected output value given an accepted input
 
-```tut
+```tut:book
 class CounterSpec extends BaseTest {
-  test("`Counter#amount` is immutable and pure") { // The actual test case
+  test("`Counter#amount` is immutable and pure") { 
     new Counter(Amount(0)).increase().amount shouldBe Amount(1)
   }
 }
@@ -456,7 +436,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing?
 
 Back to our original concerns
 
@@ -467,11 +447,11 @@ Back to our original concerns
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Runtime
 
 Changes in requirements made us realize our component needed to support also async computations
 
-```tut
+```tut:silent
 class FutureCounter(val amount: Amount) { // values are immutable
   def increase(): Future[Counter] = // Every operation returns an immutable copy
     Future {
@@ -485,11 +465,11 @@ class FutureCounter(val amount: Amount) { // values are immutable
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Runtime
 
 We are forcing call sites to block even those that did not want to be async
 
-```tut
+```tut:book
 class CounterSpec extends BaseTest {
   test("`FutureCounter#amount` is immutable and pure") { // The actual test case
     val asyncResult = new FutureCounter(Amount(0)).increase()
@@ -501,11 +481,11 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Runtime
 
 Most specialized implementations denote insufficient polymorphism
 
-```tut
+```tut:silent
 class FutureCounter(val amount: Amount) { 
   def increase: Future[Counter] = // increase returns immediately and starts its computation async
     Future {
@@ -519,11 +499,11 @@ class FutureCounter(val amount: Amount) {
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Runtime
 
 We reduce the possibility of bugs and increase flexibility by working with abstractions such as type classes
 
-```tut
+```tut:silent
 import cats.effect.Sync
 
 class Counter[F[_]: Sync](val amount: Amount) { // F[_] can be any box for which `Sync` instance is available
@@ -539,38 +519,37 @@ class Counter[F[_]: Sync](val amount: Amount) { // F[_] can be any box for which
 
 ---
 
-# [fit] What are we testing?
+# What are we testing? => Runtime
 
 Our program is now polymorphic and the same code supports many different data types.
 
 ```tut:silent
 import monix.eval.Task
 import cats.effect.IO
-
 import cats.effect.implicits._
 
 val amount = Amount(0)
 ```
-```tut
+```tut:book
 new Counter[IO](amount).increase
 ```
-```tut
+```tut:book
 new Counter[Task](amount).increase
 ```
 
 ---
 
-# [fit] What are we NOT testing?
+# What are we NOT testing?
 
 ---
 
-# [fit] What are we NOT testing?
+# What are we NOT testing?
 
 ## Invariants
 
 ---
 
-# [fit] What are we NOT testing?
+# What are we NOT testing?
 
 ## Invariants
 

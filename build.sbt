@@ -14,7 +14,8 @@ scalacOptions ++= Seq(
   "-language:higherKinds",
   "-language:implicitConversions",
   "-language:postfixOps",
-  "-Ypartial-unification")
+  "-Ypartial-unification",
+  "-deprecation:false")
 
 scalaVersion := scalaV
 
