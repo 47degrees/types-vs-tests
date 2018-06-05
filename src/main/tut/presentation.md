@@ -3,13 +3,9 @@ build-lists: true
 slidenumbers: true
 footer: @raulraja @47deg
 
+![](raul.jpg)
+
 # Better Types => Fewer Tests
-
----
-
-# Who am I? #
-
-# Better Types => Fewer Tests?
 
 ---
 
@@ -19,7 +15,9 @@ footer: @raulraja @47deg
 [@47deg](https://twitter.com/47deg)
 
 - Co-Founder and CTO at 47 Degrees
+- Scala advisory board member
 - FP advocate
+- Electric Guitar @ <Ben Montoya & the Free Monads>
 
 ---
 
@@ -229,21 +227,7 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# [fit] Functional Programming
-
-> In computer science, functional programming
-> is a programming paradigm.
-
-> A style of building the structure and elements
-> of computer programs that treats computation
-> as the evaluation of mathematical functions
-> and avoids changing-state and mutable data.
-
--- Wikipedia
-
----
-
-# [fit] What is Functional Programming
+# [fit] What is Functional Programming?
 
 > In computer science, functional programming
 > is a programming paradigm.
