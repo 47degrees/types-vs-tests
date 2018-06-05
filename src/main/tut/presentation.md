@@ -5,19 +5,25 @@ footer: @raulraja @47deg
 
 # Better Types => Fewer Tests
 
-![filtered](romanesco.jpg)
+---
+
+# Who am I? #
+
+[@raulraja](https://twitter.com/raulraja)
+[@47deg](https://twitter.com/47deg)
+
+- Co-Founder and CTO at 47 Degrees
+- FP advocate
 
 ---
 
-# More tests = Better Software?
+# Thanks! #
 
-![filtered](romanesco.jpg)
+![fit](pamplona.jpg)
 
 ---
 
-# Are tests a factor in correctness?
-
-![filtered](romanesco.jpg)
+# More tests == Better Software?
 
 ---
 
@@ -39,7 +45,7 @@ class Counter(var amount: Int) {
 
 ---
 
-# What are we testing? => Input values
+# [fit] What are we testing? => Input values
 
 ```tut:book
 class CounterSpec extends BaseTest {
@@ -54,7 +60,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing? => Side effects
+# [fit] What are we testing? => Side effects
 
 ```tut:book
 class CounterSpec extends BaseTest {
@@ -69,7 +75,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing? => Output values
+# [fit] What are we testing? => Output values
 
 ```tut:book
 class CounterSpec extends BaseTest {
@@ -82,7 +88,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing? => Runtime
+# [fit] What are we testing? => Runtime
 
 ```tut:silent
 import scala.concurrent._
@@ -93,7 +99,6 @@ class FutureCounter(val amount: AtomicInteger) {
   require(amount.get >= 0, s"($amount seed value) must be a positive atomic integer") 
   def increase(): Future[Int] =
     Future { 
-      Thread.sleep(1000) // force latency
       amount.incrementAndGet
     } 
 }
@@ -101,13 +106,13 @@ class FutureCounter(val amount: AtomicInteger) {
 
 ---
 
-# What are we testing? => Runtime
+# [fit] What are we testing? => Runtime
 
 Changes in requirements
 
 ```tut:book
 class FutureCounterSpec extends BaseTest {
-  test("`FutureCounter#amount` is mutated after `FutureCounterv#increase` is invoked") {
+  test("`FutureCounter#amount` is mutated after `FutureCounter#increase` is invoked") {
     val counter = new FutureCounter(new AtomicInteger(0))
     counter.increase()
     counter.amount.get shouldBe 1
@@ -118,7 +123,7 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# What are we testing? => Runtime
+# [fit] What are we testing? => Runtime
 
 Changes in requirements
 
@@ -126,7 +131,7 @@ Changes in requirements
 import scala.concurrent.duration._
 
 class FutureCounterSpec extends BaseTest {
-  test("`FutureCounter#amount` is mutated after `FutureCounterv#increase` is invoked") {
+  test("`FutureCounter#amount` is mutated after `FutureCounter#increase` is invoked") {
     val counter = new FutureCounter(new AtomicInteger(0))
     val result = counter.increase() map { _ => counter.amount.get shouldBe 1 }
     Await.result(result, 10.seconds)
@@ -137,34 +142,64 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# What are we testing?
+# [fit] What are we testing?
 
-- Input values are in range of acceptance
-- Side effects caused by programs
-- Programs produce an expected output value given an accepted input value.
-- Runtime machinery
+- __Input values__ are in range of acceptance 
+  (-N is not)
+- __Side effects__ caused by programs 
+  (counter is mutated in the outter scope)
+- Programs produce expected __output values__ given correct input values. 
+  (counter value is consistent with our biz logic)
+- __Runtime__ machinery 
+  (The program may work sync/async. etc...)
 
 ---
 
-# The Dark Path
+# [fit] What are we NOT testing?
 
-> Now, ask yourself why these defects happen too often. 
-> If your answer is that our languages don’t prevent them, 
+---
+
+# [fit] We don't test for: __Invariants__
+
+---
+
+# [fit] We don't test for: __Invariants__
+
+> In computer science, an invariant is a condition that can be relied upon to be true during execution of a program
+
+― Wikipedia Invariant_(computer_science)
+
+---
+
+# [fit] We don't test for: __Invariants__
+
+> In computer science, an invariant is a condition that can be relied upon to be true during execution of a program
+
+- Compilation: We trust the compiler says our values will be constrained by properties
+- Math Laws: (identity, associativity, commutativity, ...)
+- 3rd party dependencies
+
+---
+
+# [fit] The Dark Path
+
+> Now, __ask yourself why these defects happen too often__. 
+> __If your answer is that our languages don’t prevent them, 
 > then I strongly suggest that you quit your job and never 
-> think about being a programmer again; 
-> because *defects are never the fault of our languages.* 
+> think about being a programmer again;__
+> because defects are never the fault of our languages.
 
-> *Defects are the fault of programmers.* 
+> Defects are the fault of programmers.
 
-> It is programmers who create defects – not languages.
+> __It is programmers who create defects – not languages.__
 
 ― Robert C. Martin (Uncle Bob) [The Dark Path](https://blog.cleancoder.com/uncle-bob/2017/01/11/TheDarkPath.html)
 
 ---
 
-# The Dark Path
+# [fit] The Dark Path
 
-> And what is it that programmers are supposed to do to prevent defects? 
+> And __what is it that programmers are supposed to do to prevent defects?__
 > I’ll give you one guess. Here are some hints. 
 > It’s a verb. It starts with a “T”. Yeah. 
 > You got it. __TEST!__
@@ -173,44 +208,22 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# The Dark Path
+# [fit] The Dark Path
 
-I disagree & so does the compiler
-
-> And what is it that programmers are supposed to do to prevent defects? 
+> And __what is it that programmers are supposed to do to prevent defects?__
 > I’ll give you one guess. Here are some hints. 
 > It’s a verb. It starts with a “T”. Yeah. 
-> You got it. ~~TEST!~~, 
+> You got it. __TEST!__
+
+― Robert C. Martin (Uncle Bob) [The Dark Path](https://blog.cleancoder.com/uncle-bob/2017/01/11/TheDarkPath.html)
 
 ---
 
-# The Dark Path
-
-> And what is it that programmers are supposed to do to prevent defects? 
-> I’ll give you one guess. Here are some hints. 
-> It’s a verb. It starts with a “T”. Yeah. 
-> You got it. ~~TEST!~~, 
-
-__TYPES!__
-
--- Compiler. 
+# [fit] Does our programming style affect the way we test?
 
 ---
 
-# The Dark Path
-
-> And what is it that programmers are supposed to do to prevent defects? 
-> I’ll give you one guess. Here are some hints. 
-> It’s a verb. It starts with a “T”. Yeah. 
-> You got it. ~~TEST!~~, 
-
-__TYPES & FP!__
-
--- Compiler. 
-
----
-
-# What is Functional Programming
+# [fit] Functional Programming
 
 > In computer science, functional programming
 > is a programming paradigm.
@@ -224,7 +237,21 @@ __TYPES & FP!__
 
 ---
 
-# Common traits of Functional Programming 
+# [fit] What is Functional Programming
+
+> In computer science, functional programming
+> is a programming paradigm.
+
+> A style of building the structure and elements
+> of computer programs that treats computation
+> as the evaluation of mathematical functions
+> and avoids changing-state and mutable data.
+
+-- Wikipedia
+
+---
+
+# [fit] Common traits of Functional Programming 
 
 - Higher-order functions
 - Immutable data
@@ -235,7 +262,7 @@ __TYPES & FP!__
 
 ---
 
-# What are we testing?
+# [fit] What are we testing?
 
 Back to our original concerns
 
@@ -246,7 +273,7 @@ Back to our original concerns
 
 ---
 
-# What are we testing? => Input values
+# [fit] What are we testing? => Input values
 
 `counter: Int` is a poorly chosen type. Let's fix that!
 
@@ -263,7 +290,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing? => Input values
+# [fit] What are we testing? => Input values
 
 Stronger refinement for `Int` constrains our values at compile and runtime
 
@@ -284,7 +311,7 @@ class Counter(var amount: Amount) {
 
 ---
 
-# What are we testing? => Input values
+# [fit] What are we testing? => Input values
 
 The compiler can verify the range and we can properly type `amount`
 
@@ -306,7 +333,7 @@ The compiler can verify the range and we can properly type `amount`
 
 ---
 
-# What are we testing? => Input values
+# [fit] What are we testing? => Input values
 
 We can still test this but this test proves nothing
 
@@ -322,7 +349,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing? => Input values
+# [fit] What are we testing? => Input values
 
 The compiler can verify the range and we can properly type `amount`
 
@@ -338,7 +365,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing?
+# [fit] What are we testing?
 
 Back to our original concerns
 
@@ -349,7 +376,7 @@ Back to our original concerns
 
 ---
 
-# What are we testing? => Side effects
+# [fit] What are we testing? => Side effects
 
 ```tut:book
 class CounterSpec extends BaseTest {
@@ -364,7 +391,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing? => Side effects
+# [fit] What are we testing? => Side effects
 
 ```tut:silent
 class Counter(var amount: Amount) { // mutable
@@ -375,7 +402,7 @@ class Counter(var amount: Amount) { // mutable
 
 ---
 
-# What are we testing? => Side effects
+# [fit] What are we testing? => Side effects
 
 No need to test side effects if functions are __PURE!__
 
@@ -391,7 +418,7 @@ class Counter(val amount: Amount) { // values are immutable
 
 ---
 
-# What are we testing? => Side effects
+# [fit] What are we testing? => Side effects
 
 Side effects caused by programs.
 
@@ -410,7 +437,7 @@ Side effects caused by programs.
 
 ---
 
-# What are we testing?
+# [fit] What are we testing?
 
 Back to our original concerns
 
@@ -436,20 +463,20 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing?
+# [fit] What are we testing?
 
 Back to our original concerns
 
 - ~~Input values are in range of acceptance~~
 - ~~Side effects caused by programs~~
 - Programs produce an expected output value given an accepted input value
-- __Changes in requirements__
+- __Runtime requirements__
 
 ---
 
-# What are we testing? => Runtime
+# [fit] What are we testing? => Runtime
 
-Changes in requirements made us realize our component needed to support also async computations
+Changes in runtime requirements made us realize our component needed to support also async computations
 
 ```tut:silent
 class FutureCounter(val amount: Amount) { // values are immutable
@@ -465,7 +492,7 @@ class FutureCounter(val amount: Amount) { // values are immutable
 
 ---
 
-# What are we testing? => Runtime
+# [fit] What are we testing? => Runtime
 
 We are forcing call sites to block even those that did not want to be async
 
@@ -481,7 +508,7 @@ class CounterSpec extends BaseTest {
 
 ---
 
-# What are we testing? => Runtime
+# [fit] What are we testing? => Runtime
 
 Most specialized implementations denote insufficient polymorphism
 
@@ -499,7 +526,7 @@ class FutureCounter(val amount: Amount) {
 
 ---
 
-# What are we testing? => Runtime
+# [fit] What are we testing? => Runtime
 
 We reduce the possibility of bugs and increase flexibility by working with abstractions such as type classes
 
@@ -519,7 +546,7 @@ class Counter[F[_]: Sync](val amount: Amount) { // F[_] can be any box for which
 
 ---
 
-# What are we testing? => Runtime
+# [fit] What are we testing? => Runtime
 
 Our program is now polymorphic and the same code supports many different data types.
 
@@ -527,43 +554,63 @@ Our program is now polymorphic and the same code supports many different data ty
 import monix.eval.Task
 import cats.effect.IO
 import cats.effect.implicits._
-
-val amount = Amount(0)
 ```
 ```tut:book
-new Counter[IO](amount).increase
+new Counter[IO](Amount(0)).increase
 ```
 ```tut:book
-new Counter[Task](amount).increase
+new Counter[Task](Amount(0)).increase
 ```
 
 ---
 
-# What are we NOT testing?
+# [fit] What are we testing?
+
+Back to our original concerns
+
+- ~~Input values are in range of acceptance~~
+- ~~Side effects caused by programs~~
+- Programs produce an expected output value given an accepted input value
+- ~~Runtime requirements~~
 
 ---
 
-# What are we NOT testing?
+# [fit] The Dark Path
 
-## Invariants
+I disagree & so does the Compiler
 
----
-
-# What are we NOT testing?
-
-## Invariants
-
-> In computer science, an invariant is a condition that can be relied upon to be true during execution of a program
-
-― Wikipedia Invariant_(computer_science)
-
-- Compilation: We trust the compiler says our values will be constrained by properties
-- Math Laws: (identity, associativity, commutativity, ...)
-- 3rd party dependencies
+> And __what is it that programmers are supposed to do to prevent defects?__
+> I’ll give you one guess. Here are some hints. 
+> It’s a verb. It starts with a “T”. Yeah. 
+> You got it. ~~TEST!~~, 
 
 ---
 
-## Questions? & Thanks! ##
+# [fit] The Bright Path
+
+> And what is it that programmers are supposed to do to prevent defects? 
+> I’ll give you one guess. Here are some hints. 
+> It’s a verb. It starts with a “T”. Yeah. 
+> You got it. ~~TEST!~~ __TYPES!__,
+
+-- Compiler. 
+
+---
+
+# [fit] The Bright Path
+
+> And what is it that programmers are supposed to do to prevent defects? 
+> I’ll give you one guess. Here are some hints. 
+> It’s a verb. It starts with a “T”. Yeah. 
+> You got it. ~~TEST!~~ __TYPED FP!__,
+
+-- Compiler. 
+
+---
+
+## [fit] Questions? & Thanks! ##
+
+![fit](pamplona.jpg)
 
 @raulraja
 @47deg
