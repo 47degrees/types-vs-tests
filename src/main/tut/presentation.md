@@ -3,13 +3,15 @@ build-lists: true
 slidenumbers: true
 footer: @raulraja @47deg
 
-![](raul.jpg)
+![](free-monads.jpg)
 
 # Better Types => Fewer Tests
 
 ---
 
 # Who am I? #
+
+![](raul2.jpg)
 
 [@raulraja](https://twitter.com/raulraja)
 [@47deg](https://twitter.com/47deg)

@@ -3,13 +3,15 @@ build-lists: true
 slidenumbers: true
 footer: @raulraja @47deg
 
-![](raul.jpg)
+![](free-monads.jpg)
 
 # Better Types => Fewer Tests
 
 ---
 
 # Who am I? #
+
+![](raul2.jpg)
 
 [@raulraja](https://twitter.com/raulraja)
 [@47deg](https://twitter.com/47deg)
@@ -249,21 +251,7 @@ class FutureCounterSpec extends BaseTest {
 
 ---
 
-# [fit] Functional Programming
-
-> In computer science, functional programming
-> is a programming paradigm.
-
-> A style of building the structure and elements
-> of computer programs that treats computation
-> as the evaluation of mathematical functions
-> and avoids changing-state and mutable data.
-
--- Wikipedia
-
----
-
-# [fit] What is Functional Programming
+# [fit] What is Functional Programming?
 
 > In computer science, functional programming
 > is a programming paradigm.
@@ -603,11 +591,11 @@ import cats.effect.implicits._
 ```
 ```scala
 new Counter[IO](Amount(0)).increase
-// res14: cats.effect.IO[Counter[cats.effect.IO]] = IO$2007768453
+// res14: cats.effect.IO[Counter[cats.effect.IO]] = IO$642432506
 ```
 ```scala
 new Counter[Task](Amount(0)).increase
-// res15: monix.eval.Task[Counter[monix.eval.Task]] = Task.Eval$1773896745
+// res15: monix.eval.Task[Counter[monix.eval.Task]] = Task.Eval$110221167
 ```
 
 ---
