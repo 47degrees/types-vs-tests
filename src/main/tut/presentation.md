@@ -9,6 +9,12 @@ footer: @raulraja @47deg
 
 # Who am I? #
 
+# Better Types => Fewer Tests?
+
+---
+
+# Who am I? #
+
 [@raulraja](https://twitter.com/raulraja)
 [@47deg](https://twitter.com/47deg)
 
@@ -608,11 +614,9 @@ I disagree & so does the Compiler
 
 ---
 
-## [fit] Questions? & Thanks! ##
+## Thanks! ##
 
 ![fit](pamplona.jpg)
 
-@raulraja
-@47deg
-http://github.com/47deg/typeclasses-in-fp-architecture
-https://speakerdeck.com/raulraja/typeclasses-in-fp-architecture
+https://github.com/47deg/types-vs-tests
+https://speakerdeck.com/raulraja/types-vs-tests
