@@ -1,7 +1,7 @@
 autoscale: true
 build-lists: true
 slidenumbers: true
-footer: @raulraja @47deg
+footer: [(@raulraja](https://twitter.com/raulraja) [, @47deg)](https://twitter.com/47deg) [=> Sources,](https://github.com/47deg/types-vs-tests) [Slides](https://speakerdeck.com/raulraja/types-vs-tests)
 
 ![](free-monads.jpg)
 
@@ -20,12 +20,6 @@ footer: @raulraja @47deg
 - Scala advisory board member
 - FP advocate
 - Electric Guitar @ <Ben Montoya & the Free Monads>
-
----
-
-# Thanks! #
-
-![fit](pamplona.jpg)
 
 ---
 
@@ -108,17 +102,23 @@ class CounterSpec extends BaseTest {
 
 # [fit] What are we testing? => Runtime
 
+Our component is now distributed and may fail
+
 ```scala
 import scala.concurrent._
+import cats.data.NonEmptyList
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.concurrent.atomic.AtomicInteger
+import scala.util.control._
+
+sealed abstract class KnownError extends Throwable with NoStackTrace
+case object ServiceUnavailable extends KnownError
+case class CounterOutOfRange(msg: NonEmptyList[String]) extends KnownError
 
 class FutureCounter(val amount: AtomicInteger) {
   require(amount.get >= 0, s"($amount seed value) must be a positive atomic integer") 
-  def increase(): Future[Int] =
-    Future { 
-      amount.incrementAndGet
-    } 
+  def increase(): Future[Either[KnownError, Int]] =
+    Future(Right(amount.incrementAndGet)) // mocked for demo purposes
 }
 ```
 
@@ -141,7 +141,7 @@ class FutureCounterSpec extends BaseTest {
 (new FutureCounterSpec).execute
 // FutureCounterSpec:
 // - `FutureCounter#amount` is mutated after `FutureCounter#increase` is invoked *** FAILED ***
-//   0 was not equal to 1 (<console>:22)
+//   0 was not equal to 1 (<console>:26)
 ```
 
 ---
@@ -179,7 +179,7 @@ class FutureCounterSpec extends BaseTest {
 - Programs produce expected __output values__ given correct input values. 
   (counter value is consistent with our biz logic)
 - __Runtime__ machinery 
-  (The program may work sync/async. etc...)
+  (The program may work sync/async and it may fail)
 
 ---
 
@@ -310,7 +310,7 @@ class CounterSpec extends BaseTest {
 
 # [fit] What are we testing? => Input values
 
-Stronger refinement for `Int` constrains our values at compile and runtime
+Refining `Int` constrains our values at compile and runtime
 
 ```scala
 import eu.timepit.refined.W
@@ -318,7 +318,9 @@ import eu.timepit.refined.cats.syntax._
 import eu.timepit.refined.api.{Refined, RefinedTypeOps}
 import eu.timepit.refined.numeric._
 
-type Amount = Int Refined GreaterEqual[W.`0`.T]
+type Zero = W.`0`.T
+type Ten = W.`10`.T
+type Amount = Int Refined Interval.Closed[Zero, Ten]
 object Amount extends RefinedTypeOps[Amount, Int]
 
 class Counter(var amount: Amount) {
@@ -337,16 +339,18 @@ The compiler can verify the range and we can properly type `amount`
 + import eu.timepit.refined.api.{Refined, RefinedTypeOps}
 + import eu.timepit.refined.numeric._
 
-+ type Amount = Int Refined GreaterEqual[W.`0`.T]
++ type Zero = W.`0`.T
++ type Ten = W.`10`.T
++ type Amount = Int Refined Interval.Closed[Zero, Ten]
 + object Amount extends RefinedTypeOps[Amount, Int]
 
 - class Counter(var amount: Int) {
 + class Counter(var amount: Amount) {
-- require(amount >= 0, s"($amount seed value) must be a positive integer") 
-  def increase(): Unit =
--   amount += 1
-+   Amount.from(amount.value + 1).foreach(v => amount = v)
-}
+-   require(amount >= 0, s"($amount seed value) must be a positive integer") 
+    def increase(): Unit =
+-     amount += 1
++     Amount.from(amount.value + 1).foreach(v => amount = v)
+  }
 ```
 
 ---
@@ -356,17 +360,19 @@ The compiler can verify the range and we can properly type `amount`
 We can still test this but this test proves nothing
 
 ```scala
+import eu.timepit.refined.scalacheck.numeric._
+// import eu.timepit.refined.scalacheck.numeric._
+
 class CounterSpec extends BaseTest {
-  // Testing an invariant xD
-  test("Can't compile with literal negative number") {
-    "new Counter(-1)" shouldNot compile
+  test("`Amount` values are within range") {
+    check((amount: Amount) => amount.value >= 0 && amount.value <= 10)
   }
 }
 // defined class CounterSpec
 
 (new CounterSpec).execute
 // CounterSpec:
-// - Can't compile with literal negative number
+// - `Amount` values are within range
 ```
 
 ---
@@ -434,10 +440,10 @@ No need to test side effects if functions are __PURE!__
 
 ```scala
 class Counter(val amount: Amount) { // values are immutable
-  def increase(): Counter = // Every operation returns an immutable copy
+  def increase(): Either[KnownError, Counter] = // Every operation returns an immutable copy
     Amount.validate(amount.value + 1).fold( // Amount.validate does not need to be tested
-     { _ => new Counter(amount) }, // potential failures are also contemplated
-     { a => new Counter(a) }
+     { errors => Left(CounterOutOfRange(errors)) }, // No Exceptions are thrown
+     { a => Right(new Counter(a)) }
     )
 }
 ```
@@ -455,8 +461,8 @@ Side effects caused by programs.
 +  def increase(): Counter = // Every operation returns an immutable copy
 -    Amount.from(amount.value + 1).foreach(v => amount = v) // mutates the external scope
 +    Amount.validate(amount.value + 1).fold( // Amount.validate does not need to be tested
-+     { _ => new Counter(amount) }, // potential failures are also contemplated
-+     { a => new Counter(a) }
++      { errors => Left(CounterOutOfRange(errors)) }, // No Exceptions are thrown
++      { a => Right(new Counter(a)) }
 +    )
 }
 ```
@@ -481,7 +487,7 @@ Back to our original concerns
 ```scala
 class CounterSpec extends BaseTest {
   test("`Counter#amount` is immutable and pure") { 
-    new Counter(Amount(0)).increase().amount shouldBe Amount(1)
+    new Counter(Amount(0)).increase().map(_.amount) shouldBe Right(Amount(1))
   }
 }
 // defined class CounterSpec
@@ -506,15 +512,15 @@ Back to our original concerns
 
 # [fit] What are we testing? => Runtime
 
-Changes in runtime requirements made us realize our component needed to support also async computations
+Changes in runtime requirements force us to consider other effects (async, failures,...)
 
 ```scala
 class FutureCounter(val amount: Amount) { // values are immutable
-  def increase(): Future[Counter] = // Every operation returns an immutable copy
+  def increase(): Future[Either[KnownError, Counter]] = // Every operation returns an immutable copy
     Future {
       Amount.validate(amount.value + 1).fold( // Amount.validate does not need to be tested
-       { _ => new Counter(amount) }, // potential failures are also contemplated
-       { a => new Counter(a) }
+       { error => Left(CounterOutOfRange(error)) }, // potential failures are also contemplated
+       { a => Right(new Counter(a)) }
       )
     }
 }
@@ -528,9 +534,9 @@ We are forcing call sites to block even those that did not want to be async
 
 ```scala
 class CounterSpec extends BaseTest {
-  test("`FutureCounter#amount` is immutable and pure") { // The actual test case
+  test("`FutureCounter#amount` is immutable and pure") { 
     val asyncResult = new FutureCounter(Amount(0)).increase()
-    Await.result(asyncResult, 10.seconds).amount shouldBe Amount(1)
+    Await.result(asyncResult, 10.seconds).map(_.amount) shouldBe Right(Amount(1))
   }
 }
 // defined class CounterSpec
@@ -544,15 +550,15 @@ class CounterSpec extends BaseTest {
 
 # [fit] What are we testing? => Runtime
 
-Most specialized implementations denote insufficient polymorphism
+Concrete data types lack flexibility and increase the chance of bugs
 
 ```scala
 class FutureCounter(val amount: Amount) { 
-  def increase: Future[Counter] = // increase returns immediately and starts its computation async
+  def increase: Future[Either[KnownError, Counter]] = 
     Future {
-      Amount.validate(amount.value + 1).fold( // Amount.validate does not need to be tested
-       { _ => new Counter(amount) }, // potential failures are also contemplated
-       { a => new Counter(a) }
+      Amount.validate(amount.value + 1).fold(  
+       { error => Left(CounterOutOfRange(error)) }, 
+       { a => Right(new Counter(a)) }
       )
     }
 }
@@ -562,19 +568,52 @@ class FutureCounter(val amount: Amount) {
 
 # [fit] What are we testing? => Runtime
 
-We reduce the possibility of bugs and increase flexibility by working with abstractions such as type classes
+Everything we need to describe computation
+
+| Type class | Combinator |
+| --- | --- |
+| `Functor` | `map`, `lift` | 
+| `Applicative` | `pure`, `ap` | 
+| `ApplicativeError` | `raiseError`, `catch` | 
+| `Monad` | `flatMap`, `flatten` | 
+| `MonadError` | `ensure`, `rethrow` | 
+| `Sync` | `delay`, `suspend` | 
+| `Async` | `async` | 
+| `Effect` | `toIO` | 
+
+---
+
+# [fit] What are we testing? => Runtime
+
+Everything we need to describe combination
+
+| Type class | Combinator |
+| --- | --- |
+| `Semigroup` | `combine` | 
+| `Monoid` | `empty` | 
+| `Foldable` | `foldLeft`, `foldRight` | 
+| `Traverse` | `traverse`, `sequence` | 
+
+---
+
+# [fit] What are we testing? => Runtime
+
+Abstract type classes increase flexibility and decrease the chance of bugs
 
 ```scala
 import cats.effect.Sync
 
-class Counter[F[_]: Sync](val amount: Amount) { // F[_] can be any box for which `Sync` instance is available
-  def increase(): F[Counter[F]] = // A counter is returned in a generic box 
-    Sync[F].delay { //delay defers execution of the contained block
+// F[_] can be any box for which `Sync` instance is available
+class Counter[F[_]](val amount: Amount)(implicit F: Sync[F]) { 
+  // A counter is returned in a generic box 
+  def increase(): F[Counter[F]] = { 
+    F.suspend { // Effects in the block are deferred 
       Amount.validate(amount.value + 1).fold( 
-       { _ => new Counter(amount) }, 
-       { a => new Counter(a) }
+       { error => F.raiseError(CounterOutOfRange(error)) }, 
+       { a => F.pure(new Counter(a)) }
       )
     }
+  }
 }
 ```
 
@@ -582,20 +621,63 @@ class Counter[F[_]: Sync](val amount: Amount) { // F[_] can be any box for which
 
 # [fit] What are we testing? => Runtime
 
-Our program is now polymorphic and the same code supports many different data types.
+Our tests may also be polymorphic
+
+```scala
+import cats.effect._
+import cats.effect.implicits._
+
+class CounterSpec[F[_]](implicit F: Effect[F]) extends BaseTest {
+  test("`Counter#amount` is immutable and pure") { 
+    val result: F[Counter[F]] = new Counter[F](Amount(0)).increase()
+    F.toIO(result).unsafeRunSync().amount shouldBe Amount(1)
+  }
+}
+```
+
+---
+
+# [fit] What are we testing? => Runtime
+
+A la carte
+
+```scala
+(new CounterSpec[IO]).execute
+// CounterSpec:
+// - `Counter#amount` is immutable and pure
+```
+
+---
+
+# [fit] What are we testing? => Runtime
+
+A la carte
 
 ```scala
 import monix.eval.Task
-import cats.effect.IO
-import cats.effect.implicits._
+// import monix.eval.Task
+
+import monix.execution.Scheduler.Implicits.global
+// import monix.execution.Scheduler.Implicits.global
+
+(new CounterSpec[Task]).execute
+// CounterSpec:
+// - `Counter#amount` is immutable and pure
 ```
+
+---
+
+# [fit] What are we testing? => Runtime
+
+A la carte (only for the well behaved)
+
 ```scala
-new Counter[IO](Amount(0)).increase
-// res14: cats.effect.IO[Counter[cats.effect.IO]] = IO$642432506
-```
-```scala
-new Counter[Task](Amount(0)).increase
-// res15: monix.eval.Task[Counter[monix.eval.Task]] = Task.Eval$110221167
+(new CounterSpec[Future]).execute // fails to compile, because Future can't suspend effects
+// <console>:46: error: Cannot find implicit value for Effect[scala.concurrent.Future].
+// Building this implicit value might depend on having an implicit
+// s.c.ExecutionContext in scope, a Scheduler or some equivalent type.
+//        (new CounterSpec[Future]).execute // fails to compile, because Future can't suspend effects
+//         ^
 ```
 
 ---
@@ -644,9 +726,20 @@ I disagree & so does the Compiler
 
 ---
 
+![](free-monads.jpg)
+
+# Better Types => Fewer Tests
+
+---
+
+![](free-monads.jpg)
+
+# Better Types => Better Programs
+
+---
+
 ## Thanks! ##
 
-![fit](pamplona.jpg)
+![](free-monads.jpg)
 
-https://github.com/47deg/types-vs-tests
-https://speakerdeck.com/raulraja/types-vs-tests
+# Better Types => Better Programs

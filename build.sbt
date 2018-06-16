@@ -2,7 +2,7 @@ import sbt.Keys._
 
 val scalaV = "2.12.6"
 val simulacrumV = "0.12.0"
-val catsEffectV = "1.0.0-RC"
+val catsEffectV = "1.0.0-RC2"
 val textRazorV = "1.0.11"
 val scalacheckV = "1.14.0"
 val scalaTestV = "3.0.5"
@@ -39,6 +39,7 @@ libraryDependencies ++= Seq(
   "com.textrazor" % "textrazor" % textRazorV,
   "eu.timepit" %% "refined" % refinedV,
   "eu.timepit" %% "refined-cats" % refinedV,
+  "eu.timepit" %% "refined-scalacheck" % refinedV,
   "org.typelevel" %% "cats-effect" % catsEffectV,
   "org.scalacheck" %% "scalacheck" % scalacheckV,
   "org.scalatest" %% "scalatest" % scalaTestV,
